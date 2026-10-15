@@ -12,3 +12,5 @@ sum(raw$price == "")      # how many listings have no price (3,112)
 
 table(raw$room_type)      # count of each room type
 summary(raw$accommodates) # min, quartiles, mean, max of guests
+
+#try
