@@ -1,0 +1,290 @@
+---
+title: "Regression Analysis"
+format:
+  html:
+    toc: true
+  pdf:
+    mainfont: "Times New Roman"
+    fontsize: 12pt
+    linestretch: 1.5
+    geometry: margin=2.54cm
+execute:
+  warning: false
+  message: false
+---
+
+## Regression Analysis
+
+
+### Data overview
+
+The regression analysis uses the cleaned Sydney Airbnb dataset, which contains
+13,219 listings and 19 variables with no missing values. The response variable
+is the nightly price of a listing. The explanatory variables describe the size of
+the listing (accommodates, bedrooms, bathrooms), its type (room type, shared or
+private bathroom), host and review characteristics (superhost status, review
+rating, number of reviews, availability, minimum nights) and its location
+(local government area, LGA).
+
+Price is strongly right-skewed (mean $429.5, median $341, maximum $5,077;
+@fig-price-dist), so a small number of very expensive listings dominate the raw scale.
+We therefore model log(price), which is approximately symmetric (mean 5.81,
+median 5.83). This also lets coefficients be interpreted as approximate
+percentage changes in price. Listings with zero bedrooms correspond to studios
+and were retained.
+
+
+
+```{r}
+#| label: load-data
+
+df <- read.csv("airbnb_sydney_clean.csv", stringsAsFactors = TRUE)
+
+dim(df)
+str(df)
+colSums(is.na(df))
+```
+
+```{r}
+#| label: summary-stats
+
+summary(df[, c("price", "log_price", "accommodates", "bedrooms", "bathrooms",
+               "minimum_nights", "availability_365", "number_of_reviews",
+               "review_rating")])
+
+table(df$room_type)
+table(df$shared_bath)
+table(df$superhost)
+nlevels(df$lga)
+```
+
+```{r}
+#| label: fig-price-dist
+#| fig-cap: "Distribution of price (left) and log(price) (right)"
+#| fig-width: 8
+#| fig-height: 4
+
+par(mfrow = c(1, 2))
+hist(df$price, breaks = 50, main = "Price", xlab = "Price ($)")
+hist(df$log_price, breaks = 50, main = "log(Price)", xlab = "log(Price)")
+par(mfrow = c(1, 1))
+```
+
+### Variable selection and data split
+
+Variables were selected on the basis of relevance to pricing and to avoid
+overlap between predictors. The identifier, raw price, latitude, longitude,
+property type, bedroom group and reviews in the last 12 months were excluded:
+LGA already captures location, room type captures the main property-type
+distinction, and the excluded review and bedroom variables duplicate
+information in number_of_reviews and bedrooms. Number of reviews and minimum
+nights are right-skewed, so they were log-transformed.
+
+Exploratory plots (@fig-relationships) show that entire homes are priced
+substantially higher than private rooms, and that price rises steadily with
+the number of bedrooms and the number of guests accommodated. Superhost status
+shows little visible difference in price. Accommodates (r = 0.65) and bedrooms
+(r = 0.62) had the strongest correlations with log(price), followed by
+bathrooms (r = 0.44) and review rating (r = 0.24), whereas availability and
+minimum nights were close to zero.
+
+To assess predictive performance, the data were randomly split into a training
+set (80%, n = 10,575) and a test set (20%, n = 2,644). Models are fitted on the
+training set and evaluated on the unseen test set.
+
+
+```{r}
+#| label: prep-data
+
+# Log-transform the two skewed predictors
+df$log_reviews   <- log(df$number_of_reviews)
+df$log_minnights <- log(df$minimum_nights)
+
+# Correlation of each numeric variable with log_price
+num_vars <- c("log_price", "accommodates", "bedrooms", "bathrooms",
+              "minimum_nights", "availability_365", "number_of_reviews",
+              "reviews_last_12m", "review_rating")
+round(cor(df[, num_vars])[, "log_price"], 2)
+```
+
+```{r}
+#| label: fig-relationships
+#| fig-cap: "log(price) against key predictors"
+#| fig-width: 9
+#| fig-height: 7
+
+par(mfrow = c(2, 2))
+boxplot(log_price ~ room_type,  data = df, main = "By room type",  xlab = "", ylab = "log(price)")
+boxplot(log_price ~ superhost,  data = df, main = "By superhost",  xlab = "", ylab = "log(price)")
+boxplot(log_price ~ bedroom_group, data = df, main = "By bedrooms", xlab = "", ylab = "log(price)")
+plot(df$accommodates, df$log_price, pch = 16, cex = 0.3,
+     main = "By accommodates", xlab = "Accommodates", ylab = "log(price)")
+par(mfrow = c(1, 1))
+```
+
+```{r}
+#| label: train-test-split
+
+set.seed(123)
+n <- nrow(df)
+train_id <- sample(n, size = round(0.8 * n))
+train <- df[train_id, ]
+test  <- df[-train_id, ]
+
+c(train = nrow(train), test = nrow(test))
+
+# Any area that appears only in the test set? (should be 0 / empty)
+setdiff(unique(as.character(test$lga)), unique(as.character(train$lga)))
+```
+```{r}
+#| label: fit-models
+
+m1 <- lm(log_price ~ accommodates, data = train)
+
+m2 <- lm(log_price ~ accommodates + bedrooms + bathrooms + room_type + shared_bath,
+         data = train)
+
+m3 <- lm(log_price ~ accommodates + bedrooms + bathrooms + room_type + shared_bath +
+           superhost + review_rating + log_reviews + availability_365 + log_minnights,
+         data = train)
+
+m4 <- update(m3, . ~ . + lga)
+```
+
+```{r}
+#| label: tbl-model-comparison
+#| tbl-cap: "Comparison of candidate regression models"
+
+models <- list(M1 = m1, M2 = m2, M3 = m3, M4 = m4)
+
+comp <- data.frame(
+  Model      = names(models),
+  Predictors = sapply(models, function(m) length(coef(m)) - 1),
+  R2         = sapply(models, function(m) summary(m)$r.squared),
+  Adj_R2     = sapply(models, function(m) summary(m)$adj.r.squared),
+  Test_RMSE  = sapply(models, function(m) sqrt(mean((test$log_price - predict(m, test))^2)))
+)
+
+knitr::kable(comp, digits = 3, row.names = FALSE)
+```
+### Model building and comparison
+
+The models were compared using R², adjusted R², F-tests between successive
+models and RMSE on the held-out test set (@tbl-model-comparison). R² increases
+whenever predictors are added, so adjusted R² was used to check that the gain
+was genuine. Adding size and type variables raised adjusted R² from 0.421 to
+0.624, host and review variables raised it slightly to 0.637, and adding
+location raised it to 0.743. F-tests comparing each model with the previous one
+were significant at every step (all p-values [fill in from your anova output]),
+including the addition of LGA (F = 118.2, p < 0.001). M4 also had the lowest
+test RMSE (0.358), so its better fit was not due to overfitting. M4 was
+therefore selected as the final model.
+
+### Final model
+
+```{r}
+#| label: final-model
+
+summary(m4)$coefficients[1:11, ]      # first 11 rows: intercept + main predictors
+```
+
+```{r}
+#| label: tbl-effects
+#| tbl-cap: "Estimated effect on price of each predictor (M4)"
+
+b <- coef(m4)[2:11]
+effects <- data.frame(Predictor = names(b),
+                      Percent_change_in_price = round(100 * (exp(b) - 1), 1))
+knitr::kable(effects, row.names = FALSE)
+```
+
+```{r}
+#| label: anova-steps
+
+anova(m1, m2, m3, m4)
+
+```
+The models were compared using R², adjusted R², F-tests between successive
+models and the RMSE on the held-out test set (@tbl-model-comparison). R² cannot
+fall when predictors are added, so adjusted R² was used to check that the gains
+were genuine; the two values are almost identical here because the sample is
+large. Adding size and type variables raised adjusted R² from 0.421 to 0.624
+(F = 2090.1, p < 0.001), host and review variables raised it only slightly to
+0.637 (F = 108.5, p < 0.001), and adding location raised it to 0.743
+(F = 118.2, p < 0.001). Every step was therefore statistically significant,
+but the improvement from host and review variables was small in practice,
+whereas size, type and location were the most important. M4 also had the
+lowest test RMSE (0.358), so its better fit is not due to overfitting, and it
+was selected as the final model despite having 47 predictors.
+
+### Diagnostics
+```{r}
+#| label: fig-diagnostics
+#| fig-cap: "Diagnostic plots for the final model (M4)"
+#| fig-width: 9
+#| fig-height: 8
+
+par(mfrow = c(2, 2))
+plot(m4, which = 1:4)
+par(mfrow = c(1, 1))
+```
+Residuals vs Fitted: an even band around zero, so a linear model on the log scale is reasonable.
+Q-Q plot: close to the line in the middle but bending at the ends, so a few very expensive listings are poorly predicted.
+Scale-Location: roughly flat, with a slight rise at high fitted values, so the spread is mostly even.
+Cook’s distance: no point stands far above the rest (maximum about 0.04), so no single listing drives the model.
+
+
+
+### Prediction
+```{r}
+#| label: tbl-test-performance
+#| tbl-cap: "Performance of M4 on the test set"
+
+pred_log <- predict(m4, newdata = test)
+actual   <- test$log_price
+
+test_r2   <- 1 - sum((actual - pred_log)^2) / sum((actual - mean(actual))^2)
+test_rmse <- sqrt(mean((actual - pred_log)^2))
+
+knitr::kable(data.frame(Test_R2 = test_r2, Test_RMSE = test_rmse), digits = 3)
+```
+
+```{r}
+#| label: fig-pred-actual
+#| fig-cap: "Predicted versus actual log(price) on the test set"
+#| fig-width: 5.5
+#| fig-height: 5.5
+
+plot(pred_log, actual, pch = 16, cex = 0.3, col = rgb(0, 0, 0, 0.3),
+     xlab = "Predicted log(price)", ylab = "Actual log(price)")
+abline(0, 1, col = "red", lwd = 2)
+```
+The model was tested on the 20% of listings it never saw.
+Test R² is 0.735 and RMSE is 0.358. These are close to the training values (adjusted R² 0.743), so the model is not overfitting.
+Points in @fig-pred-actual follow the red line, with more scatter and some under-prediction at high prices.
+
+
+### Limitations
+The model explains about three quarters of the variation in price, and the rest is due to things not in the data, such as photo quality, views and exact street location.
+Errors are larger for very expensive listings (heavy tails in the Q-Q plot).
+The results show association, not cause.
+Prices are asking prices from one point in time.
+
+### Summary
+
+This section modelled the nightly price of Sydney Airbnb listings using
+multiple linear regression. Price was log-transformed because it is strongly
+right-skewed. Four nested models were compared, and the final model (M4),
+which includes listing size, type, host and review variables and location
+(LGA), explained about 74% of the variation in log(price) (adjusted R² = 0.743)
+and had the highest adjusted R² and the lowest test error. Private rooms and shared
+bathrooms were associated with lower prices (about 41% and 24% lower), while
+more bedrooms, bathrooms and guests and higher review ratings were associated
+with higher prices. Superhost status had no clear effect, and location
+improved the model significantly. The model predicted unseen listings well
+(test R² = 0.735), although it is less reliable for very expensive listings
+and shows association rather than cause.
+
+
+
+

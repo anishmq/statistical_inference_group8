@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Regression Analysis</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="regressin_analysis_files/libs/clipboard/clipboard.min.js"></script>
+<script src="regressin_analysis_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="regressin_analysis_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="regressin_analysis_files/libs/quarto-html/popper.min.js"></script>
+<script src="regressin_analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="regressin_analysis_files/libs/quarto-html/anchor.min.js"></script>
+<link href="regressin_analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="regressin_analysis_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="regressin_analysis_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="regressin_analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="regressin_analysis_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#regression-analysis" id="toc-regression-analysis" class="nav-link active" data-scroll-target="#regression-analysis">Regression Analysis</a>
+  <ul class="collapse">
+  <li><a href="#data-overview" id="toc-data-overview" class="nav-link" data-scroll-target="#data-overview">Data overview</a></li>
+  <li><a href="#variable-selection-and-data-split" id="toc-variable-selection-and-data-split" class="nav-link" data-scroll-target="#variable-selection-and-data-split">Variable selection and data split</a></li>
+  <li><a href="#model-building-and-comparison" id="toc-model-building-and-comparison" class="nav-link" data-scroll-target="#model-building-and-comparison">Model building and comparison</a></li>
+  <li><a href="#final-model" id="toc-final-model" class="nav-link" data-scroll-target="#final-model">Final model</a></li>
+  <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">Diagnostics</a></li>
+  <li><a href="#prediction" id="toc-prediction" class="nav-link" data-scroll-target="#prediction">Prediction</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="regressin_analysis.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Regression Analysis</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="regression-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="regression-analysis">Regression Analysis</h2>
+<section id="data-overview" class="level3">
+<h3 class="anchored" data-anchor-id="data-overview">Data overview</h3>
+<p>The regression analysis uses the cleaned Sydney Airbnb dataset, which contains 13,219 listings and 19 variables with no missing values. The response variable is the nightly price of a listing. The explanatory variables describe the size of the listing (accommodates, bedrooms, bathrooms), its type (room type, shared or private bathroom), host and review characteristics (superhost status, review rating, number of reviews, availability, minimum nights) and its location (local government area, LGA).</p>
+<p>Price is strongly right-skewed (mean $429.5, median $341, maximum $5,077; <a href="#fig-price-dist" class="quarto-xref">Figure&nbsp;1</a>), so a small number of very expensive listings dominate the raw scale. We therefore model log(price), which is approximately symmetric (mean 5.81, median 5.83). This also lets coefficients be interpreted as approximate percentage changes in price. Listings with zero bedrooms correspond to studios and were retained.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"airbnb_sydney_clean.csv"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 13219    19</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   13219 obs. of  19 variables:
+ $ id               : num  1877472 1886610 15253 58506 68999 ...
+ $ price            : num  140 408 221 228 146 ...
+ $ room_type        : Factor w/ 2 levels "Entire home/apt",..: 1 1 2 1 2 1 1 1 1 2 ...
+ $ property_type    : Factor w/ 44 levels "Barn","Boat",..: 10 14 27 9 30 9 14 14 11 30 ...
+ $ lga              : Factor w/ 38 levels "Ashfield","Auburn",..: 27 36 33 23 14 29 28 36 27 19 ...
+ $ accommodates     : int  2 2 2 4 4 2 2 4 4 1 ...
+ $ bedrooms         : int  1 1 1 1 2 1 1 2 2 1 ...
+ $ bathrooms        : num  1 1.5 1 1 2.5 1 1 1 2 1 ...
+ $ shared_bath      : Factor w/ 2 levels "Private","Shared": 1 1 1 1 2 1 1 1 1 2 ...
+ $ superhost        : Factor w/ 2 levels "Not superhost",..: 2 2 2 2 2 1 2 1 2 2 ...
+ $ minimum_nights   : int  1 1 1 2 1 2 1 7 7 1 ...
+ $ availability_365 : int  218 211 188 175 297 281 17 171 114 347 ...
+ $ number_of_reviews: int  478 575 689 484 135 61 373 21 26 25 ...
+ $ reviews_last_12m : int  39 68 57 36 15 12 18 3 4 9 ...
+ $ review_rating    : num  4.92 4.91 4.57 4.65 4.96 4.87 4.95 4.71 5 4.73 ...
+ $ latitude         : num  -33.7 -33.9 -33.9 -33.8 -33.7 ...
+ $ longitude        : num  151 151 151 151 151 ...
+ $ log_price        : num  4.94 6.01 5.4 5.43 4.98 ...
+ $ bedroom_group    : Factor w/ 6 levels "1","2","3","4",..: 1 1 1 1 2 1 1 2 2 1 ...</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(df))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               id             price         room_type     property_type 
+                0                 0                 0                 0 
+              lga      accommodates          bedrooms         bathrooms 
+                0                 0                 0                 0 
+      shared_bath         superhost    minimum_nights  availability_365 
+                0                 0                 0                 0 
+number_of_reviews  reviews_last_12m     review_rating          latitude 
+                0                 0                 0                 0 
+        longitude         log_price     bedroom_group 
+                0                 0                 0 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df[, <span class="fu">c</span>(<span class="st">"price"</span>, <span class="st">"log_price"</span>, <span class="st">"accommodates"</span>, <span class="st">"bedrooms"</span>, <span class="st">"bathrooms"</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>               <span class="st">"minimum_nights"</span>, <span class="st">"availability_365"</span>, <span class="st">"number_of_reviews"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>               <span class="st">"review_rating"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     price          log_price      accommodates       bedrooms    
+ Min.   :  41.5   Min.   :3.726   Min.   : 1.000   Min.   : 0.00  
+ 1st Qu.: 225.0   1st Qu.:5.416   1st Qu.: 2.000   1st Qu.: 1.00  
+ Median : 341.0   Median :5.832   Median : 4.000   Median : 1.00  
+ Mean   : 429.5   Mean   :5.809   Mean   : 4.089   Mean   : 1.79  
+ 3rd Qu.: 494.9   3rd Qu.:6.204   3rd Qu.: 6.000   3rd Qu.: 2.00  
+ Max.   :5076.8   Max.   :8.532   Max.   :16.000   Max.   :11.00  
+   bathrooms      minimum_nights   availability_365 number_of_reviews
+ Min.   : 0.000   Min.   : 1.000   Min.   :  1.0    Min.   :   1.00  
+ 1st Qu.: 1.000   1st Qu.: 1.000   1st Qu.: 86.0    1st Qu.:   7.00  
+ Median : 1.000   Median : 2.000   Median :177.0    Median :  24.00  
+ Mean   : 1.453   Mean   : 2.075   Mean   :187.1    Mean   :  54.61  
+ 3rd Qu.: 2.000   3rd Qu.: 2.000   3rd Qu.:290.0    3rd Qu.:  66.00  
+ Max.   :12.000   Max.   :30.000   Max.   :365.0    Max.   :1166.00  
+ review_rating  
+ Min.   :1.000  
+ 1st Qu.:4.660  
+ Median :4.840  
+ Mean   :4.727  
+ 3rd Qu.:4.960  
+ Max.   :5.000  </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(df<span class="sc">$</span>room_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Entire home/apt    Private room 
+          10774            2445 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(df<span class="sc">$</span>shared_bath)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Private  Shared 
+  11734    1485 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(df<span class="sc">$</span>superhost)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Not superhost     Superhost 
+         7507          5712 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nlevels</span>(df<span class="sc">$</span>lga)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 38</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(df<span class="sc">$</span>price, <span class="at">breaks =</span> <span class="dv">50</span>, <span class="at">main =</span> <span class="st">"Price"</span>, <span class="at">xlab =</span> <span class="st">"Price ($)"</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(df<span class="sc">$</span>log_price, <span class="at">breaks =</span> <span class="dv">50</span>, <span class="at">main =</span> <span class="st">"log(Price)"</span>, <span class="at">xlab =</span> <span class="st">"log(Price)"</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-price-dist" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-price-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="regressin_analysis_files/figure-html/fig-price-dist-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-price-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Distribution of price (left) and log(price) (right)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="variable-selection-and-data-split" class="level3">
+<h3 class="anchored" data-anchor-id="variable-selection-and-data-split">Variable selection and data split</h3>
+<p>Variables were selected on the basis of relevance to pricing and to avoid overlap between predictors. The identifier, raw price, latitude, longitude, property type, bedroom group and reviews in the last 12 months were excluded: LGA already captures location, room type captures the main property-type distinction, and the excluded review and bedroom variables duplicate information in number_of_reviews and bedrooms. Number of reviews and minimum nights are right-skewed, so they were log-transformed.</p>
+<p>Exploratory plots (<a href="#fig-relationships" class="quarto-xref">Figure&nbsp;2</a>) show that entire homes are priced substantially higher than private rooms, and that price rises steadily with the number of bedrooms and the number of guests accommodated. Superhost status shows little visible difference in price. Accommodates (r = 0.65) and bedrooms (r = 0.62) had the strongest correlations with log(price), followed by bathrooms (r = 0.44) and review rating (r = 0.24), whereas availability and minimum nights were close to zero.</p>
+<p>To assess predictive performance, the data were randomly split into a training set (80%, n = 10,575) and a test set (20%, n = 2,644). Models are fitted on the training set and evaluated on the unseen test set.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Log-transform the two skewed predictors</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>log_reviews   <span class="ot">&lt;-</span> <span class="fu">log</span>(df<span class="sc">$</span>number_of_reviews)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>log_minnights <span class="ot">&lt;-</span> <span class="fu">log</span>(df<span class="sc">$</span>minimum_nights)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Correlation of each numeric variable with log_price</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>num_vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"log_price"</span>, <span class="st">"accommodates"</span>, <span class="st">"bedrooms"</span>, <span class="st">"bathrooms"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>              <span class="st">"minimum_nights"</span>, <span class="st">"availability_365"</span>, <span class="st">"number_of_reviews"</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">"reviews_last_12m"</span>, <span class="st">"review_rating"</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cor</span>(df[, num_vars])[, <span class="st">"log_price"</span>], <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        log_price      accommodates          bedrooms         bathrooms 
+             1.00              0.65              0.62              0.44 
+   minimum_nights  availability_365 number_of_reviews  reviews_last_12m 
+             0.04              0.00             -0.09             -0.07 
+    review_rating 
+             0.24 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(log_price <span class="sc">~</span> room_type,  <span class="at">data =</span> df, <span class="at">main =</span> <span class="st">"By room type"</span>,  <span class="at">xlab =</span> <span class="st">""</span>, <span class="at">ylab =</span> <span class="st">"log(price)"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(log_price <span class="sc">~</span> superhost,  <span class="at">data =</span> df, <span class="at">main =</span> <span class="st">"By superhost"</span>,  <span class="at">xlab =</span> <span class="st">""</span>, <span class="at">ylab =</span> <span class="st">"log(price)"</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(log_price <span class="sc">~</span> bedroom_group, <span class="at">data =</span> df, <span class="at">main =</span> <span class="st">"By bedrooms"</span>, <span class="at">xlab =</span> <span class="st">""</span>, <span class="at">ylab =</span> <span class="st">"log(price)"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(df<span class="sc">$</span>accommodates, df<span class="sc">$</span>log_price, <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">cex =</span> <span class="fl">0.3</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"By accommodates"</span>, <span class="at">xlab =</span> <span class="st">"Accommodates"</span>, <span class="at">ylab =</span> <span class="st">"log(price)"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-relationships" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-relationships-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="regressin_analysis_files/figure-html/fig-relationships-1.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-relationships-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: log(price) against key predictors
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(df)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>train_id <span class="ot">&lt;-</span> <span class="fu">sample</span>(n, <span class="at">size =</span> <span class="fu">round</span>(<span class="fl">0.8</span> <span class="sc">*</span> n))</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> df[train_id, ]</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> df[<span class="sc">-</span>train_id, ]</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">train =</span> <span class="fu">nrow</span>(train), <span class="at">test =</span> <span class="fu">nrow</span>(test))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>train  test 
+10575  2644 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Any area that appears only in the test set? (should be 0 / empty)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setdiff</span>(<span class="fu">unique</span>(<span class="fu">as.character</span>(test<span class="sc">$</span>lga)), <span class="fu">unique</span>(<span class="fu">as.character</span>(train<span class="sc">$</span>lga)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>m1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(log_price <span class="sc">~</span> accommodates, <span class="at">data =</span> train)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>m2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(log_price <span class="sc">~</span> accommodates <span class="sc">+</span> bedrooms <span class="sc">+</span> bathrooms <span class="sc">+</span> room_type <span class="sc">+</span> shared_bath,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">data =</span> train)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>m3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(log_price <span class="sc">~</span> accommodates <span class="sc">+</span> bedrooms <span class="sc">+</span> bathrooms <span class="sc">+</span> room_type <span class="sc">+</span> shared_bath <span class="sc">+</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>           superhost <span class="sc">+</span> review_rating <span class="sc">+</span> log_reviews <span class="sc">+</span> availability_365 <span class="sc">+</span> log_minnights,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">data =</span> train)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>m4 <span class="ot">&lt;-</span> <span class="fu">update</span>(m3, . <span class="sc">~</span> . <span class="sc">+</span> lga)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">M1 =</span> m1, <span class="at">M2 =</span> m2, <span class="at">M3 =</span> m3, <span class="at">M4 =</span> m4)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>comp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model      =</span> <span class="fu">names</span>(models),</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Predictors =</span> <span class="fu">sapply</span>(models, <span class="cf">function</span>(m) <span class="fu">length</span>(<span class="fu">coef</span>(m)) <span class="sc">-</span> <span class="dv">1</span>),</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">R2         =</span> <span class="fu">sapply</span>(models, <span class="cf">function</span>(m) <span class="fu">summary</span>(m)<span class="sc">$</span>r.squared),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Adj_R2     =</span> <span class="fu">sapply</span>(models, <span class="cf">function</span>(m) <span class="fu">summary</span>(m)<span class="sc">$</span>adj.r.squared),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Test_RMSE  =</span> <span class="fu">sapply</span>(models, <span class="cf">function</span>(m) <span class="fu">sqrt</span>(<span class="fu">mean</span>((test<span class="sc">$</span>log_price <span class="sc">-</span> <span class="fu">predict</span>(m, test))<span class="sc">^</span><span class="dv">2</span>)))</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(comp, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-model-comparison" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-model-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Comparison of candidate regression models
+</figcaption>
+<div aria-describedby="tbl-model-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">Predictors</th>
+<th style="text-align: right;">R2</th>
+<th style="text-align: right;">Adj_R2</th>
+<th style="text-align: right;">Test_RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">M1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.421</td>
+<td style="text-align: right;">0.421</td>
+<td style="text-align: right;">0.537</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">M2</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0.624</td>
+<td style="text-align: right;">0.624</td>
+<td style="text-align: right;">0.436</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">M3</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.638</td>
+<td style="text-align: right;">0.637</td>
+<td style="text-align: right;">0.429</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">M4</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">0.744</td>
+<td style="text-align: right;">0.743</td>
+<td style="text-align: right;">0.358</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="model-building-and-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="model-building-and-comparison">Model building and comparison</h3>
+<p>The models were compared using R², adjusted R², F-tests between successive models and RMSE on the held-out test set (<a href="#tbl-model-comparison" class="quarto-xref">Table&nbsp;1</a>). R² increases whenever predictors are added, so adjusted R² was used to check that the gain was genuine. Adding size and type variables raised adjusted R² from 0.421 to 0.624, host and review variables raised it slightly to 0.637, and adding location raised it to 0.743. F-tests comparing each model with the previous one were significant at every step (all p-values [fill in from your anova output]), including the addition of LGA (F = 118.2, p &lt; 0.001). M4 also had the lowest test RMSE (0.358), so its better fit was not due to overfitting. M4 was therefore selected as the final model.</p>
+</section>
+<section id="final-model" class="level3">
+<h3 class="anchored" data-anchor-id="final-model">Final model</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m4)<span class="sc">$</span>coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">11</span>, ]      <span class="co"># first 11 rows: intercept + main predictors</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                           Estimate   Std. Error     t value      Pr(&gt;|t|)
+(Intercept)            4.6920558709 6.439114e-02  72.8680331  0.000000e+00
+accommodates           0.0532166936 3.123399e-03  17.0380717  3.100917e-64
+bedrooms               0.1599759153 6.913637e-03  23.1391826 1.387830e-115
+bathrooms              0.1059993245 6.960126e-03  15.2295113  8.021230e-52
+room_typePrivate room -0.5210946849 1.433490e-02 -36.3514772 1.131105e-272
+shared_bathShared     -0.2751806394 1.686005e-02 -16.3214558  3.689221e-59
+superhostSuperhost     0.0017856967 7.554202e-03   0.2363845  8.131389e-01
+review_rating          0.1035511306 9.120360e-03  11.3538423  1.056178e-29
+log_reviews           -0.0448369760 2.479245e-03 -18.0849297  5.125030e-72
+availability_365       0.0002591302 3.189832e-05   8.1236301  5.030872e-16
+log_minnights         -0.0514206788 6.145970e-03  -8.3665690  6.682618e-17</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">coef</span>(m4)[<span class="dv">2</span><span class="sc">:</span><span class="dv">11</span>]</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>effects <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Predictor =</span> <span class="fu">names</span>(b),</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Percent_change_in_price =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> (<span class="fu">exp</span>(b) <span class="sc">-</span> <span class="dv">1</span>), <span class="dv">1</span>))</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(effects, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-effects" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-effects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Estimated effect on price of each predictor (M4)
+</figcaption>
+<div aria-describedby="tbl-effects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Predictor</th>
+<th style="text-align: right;">Percent_change_in_price</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">accommodates</td>
+<td style="text-align: right;">5.5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bedrooms</td>
+<td style="text-align: right;">17.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bathrooms</td>
+<td style="text-align: right;">11.2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">room_typePrivate room</td>
+<td style="text-align: right;">-40.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">shared_bathShared</td>
+<td style="text-align: right;">-24.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">superhostSuperhost</td>
+<td style="text-align: right;">0.2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">review_rating</td>
+<td style="text-align: right;">10.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">log_reviews</td>
+<td style="text-align: right;">-4.4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">availability_365</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">log_minnights</td>
+<td style="text-align: right;">-5.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(m1, m2, m3, m4)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: log_price ~ accommodates
+Model 2: log_price ~ accommodates + bedrooms + bathrooms + room_type + 
+    shared_bath
+Model 3: log_price ~ accommodates + bedrooms + bathrooms + room_type + 
+    shared_bath + superhost + review_rating + log_reviews + availability_365 + 
+    log_minnights
+Model 4: log_price ~ accommodates + bedrooms + bathrooms + room_type + 
+    shared_bath + superhost + review_rating + log_reviews + availability_365 + 
+    log_minnights + lga
+  Res.Df    RSS Df Sum of Sq       F    Pr(&gt;F)    
+1  10573 2949.5                                   
+2  10569 1913.6  4   1035.92 2090.06 &lt; 2.2e-16 ***
+3  10564 1846.4  5     67.22  108.50 &lt; 2.2e-16 ***
+4  10527 1304.4 37    541.98  118.21 &lt; 2.2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>The models were compared using R², adjusted R², F-tests between successive models and the RMSE on the held-out test set (<a href="#tbl-model-comparison" class="quarto-xref">Table&nbsp;1</a>). R² cannot fall when predictors are added, so adjusted R² was used to check that the gains were genuine; the two values are almost identical here because the sample is large. Adding size and type variables raised adjusted R² from 0.421 to 0.624 (F = 2090.1, p &lt; 0.001), host and review variables raised it only slightly to 0.637 (F = 108.5, p &lt; 0.001), and adding location raised it to 0.743 (F = 118.2, p &lt; 0.001). Every step was therefore statistically significant, but the improvement from host and review variables was small in practice, whereas size, type and location were the most important. M4 also had the lowest test RMSE (0.358), so its better fit is not due to overfitting, and it was selected as the final model despite having 47 predictors.</p>
+</section>
+<section id="diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics">Diagnostics</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(m4, <span class="at">which =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-diagnostics" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diagnostics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="regressin_analysis_files/figure-html/fig-diagnostics-1.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Diagnostic plots for the final model (M4)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Residuals vs Fitted: an even band around zero, so a linear model on the log scale is reasonable. Q-Q plot: close to the line in the middle but bending at the ends, so a few very expensive listings are poorly predicted. Scale-Location: roughly flat, with a slight rise at high fitted values, so the spread is mostly even. Cook’s distance: no point stands far above the rest (maximum about 0.04), so no single listing drives the model.</p>
+</section>
+<section id="prediction" class="level3">
+<h3 class="anchored" data-anchor-id="prediction">Prediction</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>pred_log <span class="ot">&lt;-</span> <span class="fu">predict</span>(m4, <span class="at">newdata =</span> test)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>actual   <span class="ot">&lt;-</span> test<span class="sc">$</span>log_price</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>test_r2   <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>((actual <span class="sc">-</span> pred_log)<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>((actual <span class="sc">-</span> <span class="fu">mean</span>(actual))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>test_rmse <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((actual <span class="sc">-</span> pred_log)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">Test_R2 =</span> test_r2, <span class="at">Test_RMSE =</span> test_rmse), <span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="tbl-test-performance" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-test-performance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Performance of M4 on the test set
+</figcaption>
+<div aria-describedby="tbl-test-performance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Test_R2</th>
+<th style="text-align: right;">Test_RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.735</td>
+<td style="text-align: right;">0.358</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pred_log, actual, <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">cex =</span> <span class="fl">0.3</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.3</span>),</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Predicted log(price)"</span>, <span class="at">ylab =</span> <span class="st">"Actual log(price)"</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-pred-actual" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pred-actual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="regressin_analysis_files/figure-html/fig-pred-actual-1.png" class="img-fluid figure-img" width="528">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pred-actual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Predicted versus actual log(price) on the test set
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The model was tested on the 20% of listings it never saw. Test R² is 0.735 and RMSE is 0.358. These are close to the training values (adjusted R² 0.743), so the model is not overfitting. Points in <a href="#fig-pred-actual" class="quarto-xref">Figure&nbsp;4</a> follow the red line, with more scatter and some under-prediction at high prices.</p>
+</section>
+<section id="limitations" class="level3">
+<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
+<p>The model explains about three quarters of the variation in price, and the rest is due to things not in the data, such as photo quality, views and exact street location. Errors are larger for very expensive listings (heavy tails in the Q-Q plot). The results show association, not cause. Prices are asking prices from one point in time.</p>
+</section>
+<section id="summary" class="level3">
+<h3 class="anchored" data-anchor-id="summary">Summary</h3>
+<p>This section modelled the nightly price of Sydney Airbnb listings using multiple linear regression. Price was log-transformed because it is strongly right-skewed. Four nested models were compared, and the final model (M4), which includes listing size, type, host and review variables and location (LGA), explained about 74% of the variation in log(price) (adjusted R² = 0.743) and had the highest adjusted R² and the lowest test error. Private rooms and shared bathrooms were associated with lower prices (about 41% and 24% lower), while more bedrooms, bathrooms and guests and higher review ratings were associated with higher prices. Superhost status had no clear effect, and location improved the model significantly. The model predicted unseen listings well (test R² = 0.735), although it is less reliable for very expensive listings and shows association rather than cause.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
